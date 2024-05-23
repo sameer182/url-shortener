@@ -1,6 +1,7 @@
 import express from 'express';
 import dotenv from 'dotenv';
 import bodyParser from 'body-parser';
+import path from 'path';
 import shortid from 'shortid';
 import db from './database.js';
 
@@ -10,6 +11,12 @@ const app = express();
 const port = process.env.PORT;
 
 app.use(bodyParser.json());
+app.use(express.static(path.resolve('public')));
+
+app.get('/', (req, res) => {
+    res.sendFile(path.resolve('public/index.html'));
+});
+
 
 // Get all urls from db
 app.get('/urls', (req, res) => {

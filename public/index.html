@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>URL Shortener</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/vue@2"></script>
+</head>
+<body class="bg-gray-100 text-gray-900">
+
+    <div id="app" class="container mx-auto p-8">
+        <h1 class="text-2xl font-bold mb-4">URL Shortener</h1>
+
+        <form @submit.prevent="shortenUrl" class="mb-6">
+            <div class="flex items-center border-b border-b-2 border-teal-500 py-2">
+                <input v-model="longUrl" class="appearance-none bg-transparent border-none w-full text-gray-700 mr-3 py-1 px-2 leading-tight focus:outline-none" type="text" placeholder="Enter URL" aria-label="Full URL">
+                <button class="flex-shrink-0 bg-teal-500 hover:bg-teal-700 border-teal-500 hover:border-teal-700 text-sm border-4 text-white py-1 px-2 rounded" type="submit">
+                    Shorten URL
+                </button>
+            </div>
+        </form>
+
+        <div v-if="message" :class="messageClass" class="mb-4 p-2 rounded">
+            {{ message }}
+        </div>
+
+        <h2 class="text-xl font-semibold mb-4">Shortened URLs</h2>
+        <ul class="list-disc pl-5">
+            <li v-for="url in urls" :key="url.short_alias">
+                <a :href="`/${url.short_alias}`" target="_blank">{{ url.short_alias }}</a> - {{ url.long_url }}
+            </li>
+        </ul>
+    </div>
+
+
+    <script>
+        new Vue({
+            el: '#app',
+            data: {
+                longUrl: '',
+                urls: [],
+                message: '',
+                messageClass: ''
+            },
+            methods: {
+                async fetchUrls() {
+                    const response = await fetch('/urls');
+                    const urls = await response.json();
+                    this.urls = urls;
+                },
+                async shortenUrl() {
+                    try {
+                        const response = await fetch('/shorten', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json'
+                            },
+                            body: JSON.stringify({ longUrl: this.longUrl })
+                        });
+
+                        const result = await response.json();
+                        if (response.ok) {
+                            this.message = `Shortened URL: ${result.shortUrl}`;
+                            this.messageClass = 'bg-green-100 text-green-700';
+                            this.fetchUrls(); // Refresh the list of URLs
+                        } else {
+                            this.message = `Error: ${result.error}`;
+                            this.messageClass = 'bg-red-100 text-red-700';
+                        }
+                    } catch (error) {
+                        this.message = `Error: ${error.message}`;
+                        this.messageClass = 'bg-red-100 text-red-700';
+                    }
+                    this.longUrl = ''; // Clear the input field
+                }
+            },
+            mounted() {
+                this.fetchUrls(); // Initial fetch of URLs
+            }
+        });
+    </script>
+
+</body>
+</html>
